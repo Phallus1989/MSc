@@ -1,0 +1,12 @@
+Tumour_number,Dworak,Complete,HML,HL,CIP,DN,Cohort,CN
+RT1,Four,Complete,High,High,Complete,4,CHCH,2
+RT16,One,Non-Complete,Low,Low,Poor,1,CHCH,0
+RT2,Three,Non-Complete,High,High,Intermediate,3,CHCH,1
+RT23,Four,Complete,High,High,Complete,4,PM,2
+RT3,One,Non-Complete,Low,Low,Poor,1,CHCH,0
+RT36,Two,Non-Complete,Moderate,Low,Intermediate,2,PM,1
+RT37,Two,Non-Complete,Moderate,Low,Intermediate,2,PM,1
+RT38,Two,Non-Complete,Moderate,Low,Intermediate,2,PM,1
+RT4,Two,Non-Complete,Moderate,Low,Intermediate,2,CHCH,1
+RT40,Three,Non-Complete,High,High,Intermediate,3,PM,1
+RT8,Two,Non-Complete,Moderate,Low,Intermediate,2,CHCH,1
