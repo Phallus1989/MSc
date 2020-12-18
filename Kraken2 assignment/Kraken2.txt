@@ -1,0 +1,50 @@
+#builing database
+kraken2-build --download-library bacteria --db BAC_DB
+kraken2-build --download-library bacteria --db ALL_DB
+kraken2-build --download-library viral --db ALL_DB
+kraken2-build --download-library protozoa --db ALL_DB
+kraken2-build --download-library fungi --db ALL_DB
+kraken2-build --download-library archaea --db ALL_DB
+
+for i in *bacterial_genomes.fna
+do
+    kraken2-build --add-to-library $i --db ALL_DB
+done
+
+kraken2-build --add-to-library human_genome.fna --db ALL_DB
+
+for i in *bacterial_genomes.fna
+do
+    kraken2-build --add-to-library $i --db BAC_DB
+done
+
+kraken2-build --build --db ALL_DB
+kraken2-build --build --db Bac_DB
+
+
+#16S rRNA and unmapped RNA-Seq reads
+for prefix in $(ls *fq | sed -r 's/_r[12][.]fq//' | uniq);
+do
+nice ./kraken2 --db /database_directory/database \
+	--paired \
+	--threads 22 \
+	--output - \
+	--confidence 0.1 \
+	--report /STORAGE/Will/DATA_RNA/Kraken/${prefix}.0.1.[unmapped/amplicon].report \
+	"${prefix}_r1.fq" \
+	"${prefix}_r2.fq" 
+done
+
+#ONT reads
+for i in *fq;
+do
+nice ./kraken2 --db /database_directory/database \
+	--threads 22 \
+	--output - \
+	--confidence 0.1 \
+	--report /STORAGE/Will/DATA_RNA/Kraken/${prefix}.0.1.ont.report \
+	"$i" \
+done
+
+#conversion of kraken2 reports to biom format
+kraken-biom /dataset_kraken_report/directory/*report > dataset.biom

@@ -1,0 +1,22 @@
+#Synth2 processing
+
+#check human
+
+#check pseudomonas 
+
+cat *R2.fastq synth2_R2.fastq
+cat *R1.fastq synth2_R1.fastq
+
+
+#mapping to human genome
+for i in $(ls /synth_dir/ | sed s/_R[12].fastq// | sort -u);
+do
+	nice ./STAR --genomeDir /genome_dir/ --runThreadN 22 --readFilesIn /synth_dir/${i}_R1.fastq /synth_dir/${i}_R2.fastq --outSAMunmapped Within --outFileNamePrefix $i.mapped
+done;
+
+
+#samtools
+samtools view -S -b synth2.mappedAligned.out.sam > Synth2.bam
+samtools view -b -f 12 -F 256 Synth2.bam > Synth2_un.bam
+samtools sort Synth2_un.bam -o Synth2_un.sorted.bam
+bedtools bamtofastq -i Synth2_un.sorted.bam -fq Synth2_unmap_R1.fastq -fq2 Synth2_unmap_R2.fastq

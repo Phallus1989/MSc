@@ -1,0 +1,24 @@
+#Basecalling
+nice guppy_basecaller -r -i /fast5_directory -s /flowcell_directory --flowcell FLO-MIN106 --kit SQK-RBK004 --num_callers 2 --cpu_threads_per_caller 16
+
+#barcoding and trimming
+nice guppy_barcoder -r -i /fastq_directory -s /base_called_directory --barcode_kits "SQK-RBK004" -t 18
+nice porechop -i /fastq_directory -b /output_directory -t 24 --no_split --format fastq
+
+#quality control and read statistics
+filtlong --min_length 400 input.fastq > output.fastq
+fastqc /fastq_directory/*fastq -o /output_directory
+multiqc /fastqc_output_directory/
+
+#minimap2 genome alignment for removal of human reads
+#genome indexing
+minimap2 -d 38p12.mmi GCF_000001405.38_GRCh38.p12_genomic.fna
+#mapping 
+minimap2 -ax 38p12.mmi /fastq_directory/fastq > test.sam
+#samtools conversion, filtering and sorting
+samtools view -bS sample_map.sam > sample_map.bam 
+samtools view -b -f4 sample_map.bam > sample_unmap.bam 
+samtools sort sample_unmap.bam -o sample_unmap.sorted.bam 
+samtools bam2fq sample_unmap.sorted.bam > sample_unmap.fastq 
+
+

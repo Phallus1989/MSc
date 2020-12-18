@@ -1,0 +1,54 @@
+#RNA-Sequencing processing
+
+#quality control
+#fastqc
+fastqc /fastq_directory/*fastq -o /output_directory
+multiqc /fastqc_output_directory/
+
+#bbduk2 for trimming
+for prefix in $(ls *.fq.gz | sed -r 's/_[12][.]fq.gz//' | uniq);
+do
+nice /WORKSPACE/Will/bbmap/bbduk.sh -Xmx200g \
+in1="${prefix}_1.fq.gz" in2="${prefix}_2.fq.gz" \
+out1=/media/surgery/William/RNA/trimmed/fastq/"${prefix}_1_trimmed.fq.gz" out2=/media/surgery/William/RNA/trimmed/fastq/"${prefix}_2_trimmed.fq.gz" \
+minlen=50 \
+minavgquality=20\
+ref=adapt.fa \
+ktrim=r k=23 mink=11 \
+ktrim=l k=23 mink=11 \
+qtrim=rl trimq=20 \
+hdist=1 tpe tbo
+done
+
+#fastqc
+fastqc /fastq_directory/*fastq -o /output_directory
+multiqc /fastqc_output_directory/
+
+#STAR genome alignment
+#generate index
+nice ./STAR --runThreadN 30 --runMode genomeGenerate --genomeDir /genome_directory/ --genomeFastaFiles /genome_directory/GCF_000001405.38_GRCh38.p12_genomic.fna --sjdbGTFfile /genome_directory/GCF_000001405.38_GRCh38.p12_genomic.gff --sjdbOverhang 124
+
+for i in $(ls /fastq_directory/ | sed s/_[12]_trimmed.fq.gz// | sort -u);
+do
+nice ./STAR --genomeDir /genome_directory/ --runThreadN 20 --outSAMtype BAM SortedByCoordinate --readFilesCommand zcat --readFilesIn /fastq_directory/${i}_1_trimmed.fq.gz /fastq_directory/${i}_2_trimmed.fq.gz --outSAMunmapped Within --outFileNamePrefix /out_put_directory/$i.mapped --sjdbFileChrStartEnd *.out.tab 
+done;
+
+#samtools conversion, filtering and sorting
+samtools view -bS sample_mapped.sam > sample_mapped.bam 
+samtools view -b -f4 sample_map.bam > sample_unmap.bam 
+samtools sort sample_unmap.bam -o sample_unmap.sorted.bam 
+samtools bam2fq sample_unmap.sorted.bam > sample_unmap.fastq 
+
+#salmon gene quantification
+#Decoy trancriptome
+./generateDecoyTranscriptome.sh -a GCF_000001405.38_GRCh38.p12_genomic.gff -g GCF_000001405.38_GRCh38.p12_genomic.fna -t GCF_000001405.38_GRCh38.p12_rna.fna -o /output_directory
+#Creating index
+salmon index -t GCF_000001405.38_GRCh38.p12_rna.fna -i transcripts_index --decoys /decory_index_directory -k 31
+#quantification
+for prefix in $(ls *unmap.fastq | sed -r 's/_[12]_unmap[.]fastq//' | uniq);
+do
+nice salmon quant -i /salmon_index_directory/ -l A \
+         -1 "${prefix}_1_unmap.fastq" \
+         -2 "${prefix}_2_unmap.fastq" \
+         -p 30 --validateMappings -o quants/${prefix}_quant
+done 

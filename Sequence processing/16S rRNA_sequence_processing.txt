@@ -1,0 +1,28 @@
+#16S rRNA sequence processing
+
+#using pre-trimmed reads from seqeuncing provider
+
+#fastqc
+fastqc /fastq_directory/*fastq -o /output_directory
+multiqc /fastqc_output_directory/
+
+#trimming and quality control
+for prefix in $(ls *.fastq.trimmed | sed -r '_R[12]_001[.]fastq.trimmed//' | uniq);
+do
+nice /bbduk.sh -Xmx200g \
+in1="${prefix}_R1_001.fastq.trimmed" in2="${prefix}_R2_001.fastq.trimmed" \
+out1=/output_directory/fastq/"${prefix}_2_clean" out2=/output_directory/fastq/"${prefix}_2_clean" \
+minlen=50 \
+minavgquality=20
+ref=adapt.fa \
+ktrim=r k=23 mink=11 \
+ktrim=l k=23 mink=11 \
+qtrim=rl trimq=20 \
+hdist=1 tpe tbo
+done
+
+
+#fastqc
+fastqc /fastq_directory/*fastq -o /output_directory
+multiqc /fastqc_output_directory/
+
