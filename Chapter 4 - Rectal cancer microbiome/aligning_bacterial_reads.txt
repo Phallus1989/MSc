@@ -1,0 +1,10 @@
+#extracting reads from kraken2 output
+python extract_kraken_reads.py -k unmapped.out -s1 unmapped_r1.fq -s2 unmapped_r2.fq -o frag_1.fq -o2 frag_2.fq -t 817
+
+#build genome index
+./STAR --runThreadN 12 --runMode genomeGenerate --genomeSAindexNbases 2 --genomeDir bfrag --genomeFastaFiles bfrag.fna
+
+#align reads to index
+./STAR --genomeDir /index_dir/bfrag --runThreadN 12 --readFilesIn extracted_frag_1.fq extracted_frag_2.fq --outFileNamePrefix frag_aligned --alignIntronMax 1 
+
+
